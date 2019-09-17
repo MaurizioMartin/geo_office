@@ -55,6 +55,7 @@ dfcompaniesfil = pd.DataFrame(companiesfil)
 fifth_avenue = {'type': 'Point', 'coordinates': [-73.9678246, 40.7744089]}
 mountain_view = {'type': 'Point', 'coordinates': [-122.086419, 37.387120]}
 microsoft = {'type': 'Point', 'coordinates': [-122.071367, 37.412692]}
+san_francisco = {'type': 'Point', 'coordinates': [-122.4194155, 37.7749295]}
 
 # Creo un DF con los resultados que esten cerca
 df_test = pd.DataFrame(geonear(microsoft,3000))
