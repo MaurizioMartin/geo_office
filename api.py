@@ -6,6 +6,7 @@ import requests
 from dotenv import load_dotenv
 from urllib.parse import urlencode
 from bs4 import BeautifulSoup
+import pandas as pd
 import urllib.request
 load_dotenv()
 
@@ -51,10 +52,14 @@ def getVeganRestaurants(id):
         zomato_dict = {
             "rest_id": restaurant["restaurant"]["id"],
             "rest_name": restaurant["restaurant"]["name"],
-            "rest_loc": restaurant["restaurant"]["location"]
+            "address": restaurant["restaurant"]["location"]["address"],
+            "lat": restaurant["restaurant"]["location"]["latitude"],
+            "lon": restaurant["restaurant"]["location"]["longitude"]
         }
         zomato_list.append(zomato_dict)
-    return zomato_list
+
+    rests_df = pd.DataFrame(zomato_list)
+    return rests_df
 
 def getStarbucks(id):    
     headers = {    
@@ -68,15 +73,49 @@ def getStarbucks(id):
         zomato_dict = {
             "rest_id": restaurant["restaurant"]["id"],
             "rest_name": restaurant["restaurant"]["name"],
-            "rest_loc": restaurant["restaurant"]["location"]
+            "address": restaurant["restaurant"]["location"]["address"],
+            "lat": restaurant["restaurant"]["location"]["latitude"],
+            "lon": restaurant["restaurant"]["location"]["longitude"]
         }
         zomato_list.append(zomato_dict)
-    return zomato_list
+    starbucks_df = pd.DataFrame(zomato_list)
+    return starbucks_df
 
-def getMap(search,lat,lon):
-    img = "https://maps.googleapis.com/maps/api/staticmap?center="+search+"&zoom=13&size=600x300&maptype=roadmap&markers=color:blue%7Clabel:S%7C"+str(lat)+","+str(lon)+"&key="+GOOGLE_CRED
+def getCenter(df1):
+    suma = 0
+    medlat = 0
+    medlon = 0
+    for col in df1[["lat","lon"]].values:
+        suma+=1
+        medlat+=float(col[0])
+        medlon+=float(col[1])
+    return [medlat/suma,medlon/suma]
+
+def getCenterPonderate(com,res,star):
+    lat = (com[0]*0.3)+(res[0]*0.2)+(star[0]*0.5)
+    lon = (com[1]*0.3)+(res[1]*0.2)+(star[1]*0.5)
+    return [lat,lon]
+
+def getMap(search,df,center):
+    marcadores=[]
+    label = 0
+    for col in df[["lat","lon"]].values:
+        marcadores.append("&markers=color:blue%7Clabel:"+str(label)+"%7C"+str(col[0])+","+str(col[1]))
+        label+=1
+    marcadores.append("&markers=color:red%7Clabel:C%7C"+str(center[0])+","+str(center[1]))
+    marcadores= "".join(marcadores)
+    #print(marcadores)
+    #img = "https://maps.googleapis.com/maps/api/staticmap?center="+search+"&zoom=13&size=600x300&maptype=roadmap&markers=color:blue%7Clabel:S%7C"+str(lat)+","+str(lon)+"&key="+GOOGLE_CRED
+    img = "https://maps.googleapis.com/maps/api/staticmap?center="+search+"&zoom=13&size=600x300&maptype=roadmap"+marcadores+"&key="+GOOGLE_CRED
     return img
 
+def getSchools(search,lat,lon):
+    src="https://www.google.com/maps/embed/v1/search?key="+GOOGLE_CRED+"&q=schools+in+"+search+"&zoom=12&center="+str(lat)+","+str(lon)
+    return src
 
-
+'''
+def getStarbucksG(search,lat,lon):
+    src="https://www.google.com/maps/embed/v1/search?key="+GOOGLE_CRED+"&q=starbucks+in+"+search+"&zoom=12&center="+str(lat)+","+str(lon)
+    return src
+'''
     
