@@ -39,17 +39,44 @@ def getZomatoCityID(params):
     }
     return zomato_dict
 
-def getZomatoRestaurants():
+def getVeganRestaurants(id):
     headers = {    
        "user-key": "{}".format(ZOMATO_CRED)
     }
-    url="https://developers.zomato.com/api/v2.1/search?entity_id=10847&entity_type=city&radius=3000&cuisines=308"
+    url="https://developers.zomato.com/api/v2.1/search?entity_id="+str(id)+"&entity_type=city&count=10&radius=3000&cuisines=308"
     response = requests.get(url,headers=headers)
-    return response.json()
+    data=response.json()
+    zomato_list=[]
+    for restaurant in data["restaurants"]:
+        zomato_dict = {
+            "rest_id": restaurant["restaurant"]["id"],
+            "rest_name": restaurant["restaurant"]["name"],
+            "rest_loc": restaurant["restaurant"]["location"]
+        }
+        zomato_list.append(zomato_dict)
+    return zomato_list
 
-if __name__=='__main__':
-    test = input("Localizacion: ")
-    print(test)
-    print(getGeoloc(test))
-    #print(getZomatoCityID(test))
+def getStarbucks(id):    
+    headers = {    
+       "user-key": "{}".format(ZOMATO_CRED)
+    }
+    url="https://developers.zomato.com/api/v2.1/search?entity_id="+str(id)+"&entity_type=city&q=starbucks&count=10&radius=1000"
+    response = requests.get(url,headers=headers)
+    data=response.json()
+    zomato_list=[]
+    for restaurant in data["restaurants"]:
+        zomato_dict = {
+            "rest_id": restaurant["restaurant"]["id"],
+            "rest_name": restaurant["restaurant"]["name"],
+            "rest_loc": restaurant["restaurant"]["location"]
+        }
+        zomato_list.append(zomato_dict)
+    return zomato_list
+
+def getMap(search,lat,lon):
+    img = "https://maps.googleapis.com/maps/api/staticmap?center="+search+"&zoom=13&size=600x300&maptype=roadmap&markers=color:blue%7Clabel:S%7C"+str(lat)+","+str(lon)+"&key="+GOOGLE_CRED
+    return img
+
+
+
     
