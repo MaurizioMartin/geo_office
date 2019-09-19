@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 from bs4 import BeautifulSoup
 import pandas as pd
 import urllib.request
+from geopy.distance import geodesic
 load_dotenv()
 
 GOOGLE_CRED = os.getenv("GOOGLE_CRED")
@@ -44,9 +45,10 @@ def getVeganRestaurants(id):
     headers = {    
        "user-key": "{}".format(ZOMATO_CRED)
     }
-    url="https://developers.zomato.com/api/v2.1/search?entity_id="+str(id)+"&entity_type=city&count=10&radius=3000&cuisines=308"
+    url="https://developers.zomato.com/api/v2.1/search?entity_id="+str(id)+"&entity_type=city&count=10&radius=3000&cuisines=308&sort=rating&order=desc"
     response = requests.get(url,headers=headers)
     data=response.json()
+    print(data)
     zomato_list=[]
     for restaurant in data["restaurants"]:
         zomato_dict = {
@@ -59,6 +61,8 @@ def getVeganRestaurants(id):
         zomato_list.append(zomato_dict)
 
     rests_df = pd.DataFrame(zomato_list)
+
+
     return rests_df
 
 def getStarbucks(id):    
@@ -96,9 +100,26 @@ def getCenterPonderate(com,res,star):
     lon = (com[1]*0.3)+(res[1]*0.2)+(star[1]*0.5)
     return [lat,lon]
 
+def getAddress(center):
+    url = "https://maps.googleapis.com/maps/api/geocode/json?latlng="+str(center[0])+","+str(center[1])+"&key="+GOOGLE_CRED
+    response = requests.get(url)
+    data=response.json()
+    data=data["results"][0]["formatted_address"]
+    return data
+
+def addDistance(latitude,longitude,center):
+    return geodesic(tuple(center), (latitude,longitude)).miles
+
+def orderdf(df,center):
+    df["distance"] = df.apply(lambda x: addDistance(x["lat"], x["lon"],center), axis = 1)
+    df = df.sort_values(by=['distance'])
+    return df
+
+
 def getMap(search,df,center):
     marcadores=[]
     label = 0
+
     for col in df[["lat","lon"]].values:
         marcadores.append("&markers=color:blue%7Clabel:"+str(label)+"%7C"+str(col[0])+","+str(col[1]))
         label+=1
@@ -106,16 +127,23 @@ def getMap(search,df,center):
     marcadores= "".join(marcadores)
     #print(marcadores)
     #img = "https://maps.googleapis.com/maps/api/staticmap?center="+search+"&zoom=13&size=600x300&maptype=roadmap&markers=color:blue%7Clabel:S%7C"+str(lat)+","+str(lon)+"&key="+GOOGLE_CRED
-    img = "https://maps.googleapis.com/maps/api/staticmap?center="+search+"&zoom=13&size=600x300&maptype=roadmap"+marcadores+"&key="+GOOGLE_CRED
+    img = "https://maps.googleapis.com/maps/api/staticmap?center="+search+"&zoom=13&size=600x450&maptype=roadmap"+marcadores+"&key="+GOOGLE_CRED
     return img
 
 def getSchools(search,lat,lon):
     src="https://www.google.com/maps/embed/v1/search?key="+GOOGLE_CRED+"&q=schools+in+"+search+"&zoom=12&center="+str(lat)+","+str(lon)
     return src
 
-'''
-def getStarbucksG(search,lat,lon):
-    src="https://www.google.com/maps/embed/v1/search?key="+GOOGLE_CRED+"&q=starbucks+in+"+search+"&zoom=12&center="+str(lat)+","+str(lon)
+def getCenterMap(center):
+    src="https://www.google.com/maps/embed/v1/view?key="+GOOGLE_CRED+"&center="+str(center[0])+","+str(center[1])+"&zoom=18&maptype=satellite"
     return src
-'''
+
+def getDir(center,coord):
+    orig=getAddress(center)
+    orig=orig.replace(" ","+")
+    dest=getAddress(coord)
+    dest=dest.replace(" ","+")
+    src="https://www.google.com/maps/embed/v1/directions?key="+GOOGLE_CRED+"&origin="+orig+"&destination="+dest+"&mode=walking"
+    return src
+
     

@@ -5,16 +5,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home page</title>
+    <link rel="stylesheet" type="text/css" href="/static/index.css"> 
 </head>
 
 <body>
 
-    <form method="post" action="doform">
-        <div>
-            Search: <input type="text" name="searchbox">
-            <input type="submit" value="Submit">
-        </div>
-    </form>
+    <h1>Search<br><span data-shadow-text="The best place">The best place</span><br> for your company</h1>
+
+    <div class="container">
+    <div class="container__item">
+		<form class="form" method="post" action="doform">
+			<input type="text" class="form__field" name="searchbox" placeholder="Insert a city" />
+			<input type="submit" value="Search" class="btn btn--primary btn--inside uppercase">
+		</form>
+    </div>
+    </div>
 
 </body>
 

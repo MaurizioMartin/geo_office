@@ -29,5 +29,10 @@ if __name__=='__main__':
     lat = 37.7749295
     lon = -122.4194155
     radio = 2500
-    df = data.getDf(lat,lon,radio)
-    api.getMap("",df)
+    center = [37.782915476387004, -122.407938144529]
+    zomatodict = api.getZomatoCityID("San Francisco")
+    rests = api.getStarbucks(zomatodict["id"])
+    print(rests)
+    rests["distance"] = rests.apply(lambda x: api.addDistance(x["lat"], x["lon"],center), axis = 1)
+    rests = rests.sort_values(by=['distance'])
+    print(rests)
