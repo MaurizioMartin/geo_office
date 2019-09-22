@@ -83,6 +83,16 @@
                                 src="{{star_near}}" allowfullscreen>
                             </iframe>
                         </div>
+
+                        <div class="section airport">
+                            <h3>Airports near</h3>
+                                %for air in airports:
+                                    {{!air}}
+                                %end
+                            <br>
+                            <img src="{{airport_img}}">
+                            <br><br>
+                        </div>
                     </div>
                 </div>
             </div>

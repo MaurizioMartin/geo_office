@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 import pandas as pd
 import json
+from geopy.distance import geodesic
     
 
 def conections(host="localhost",port="27017"):
@@ -9,12 +10,12 @@ def conections(host="localhost",port="27017"):
     return db
 
 def loadData(db):
-    data = db.companiesfil.find()
+    data = db.companiesfilt.find()
     df = pd.DataFrame(data)
     return df
 
 def geonear(db, geopoint, maxdistance=1000):
-    data = db.companiesfil.find({
+    data = db.companiesfilt.find({
         "geo":{
             "$near":{
                 "$geometry":geopoint,
@@ -43,4 +44,32 @@ def getDf(lat,lon,radio):
     df["lon"] = df["geo"].apply(getlon)
     df = df[["name","description","category_code","homepage_url","lat","lon"]]
     return df
+
+def addDistance(latitude,longitude,center):
+    return geodesic(tuple(center), (latitude,longitude)).miles
+
+def orderdf(df,center):
+    df["distance"] = df.apply(lambda x: addDistance(x["lat"], x["lon"],center), axis = 1)
+    df = df.sort_values(by=['distance'])
+    return df.head(10)
+
+def geonearAir(db, geopoint, maxdistance=1000):
+    data = db.airports_df.find({
+        "geo":{
+            "$near":{
+                "$geometry":geopoint,
+                "$maxDistance":maxdistance
+            }}})
+    df = pd.DataFrame(data)
+    return df
+
+
+def loadDataAirports(lat,lon,center):
+    radio = 20000
+    db = conections()
+    geo = geopoint(lat,lon)
+    df = geonearAir(db,geo,radio)
+    df = orderdf(df,center)
+    return df
+
 

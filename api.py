@@ -8,11 +8,14 @@ from urllib.parse import urlencode
 from bs4 import BeautifulSoup
 import pandas as pd
 import urllib.request
-from geopy.distance import geodesic
+from uber_rides.session import Session
+from uber_rides.client import UberRidesClient
 load_dotenv()
 
 GOOGLE_CRED = os.getenv("GOOGLE_CRED")
 ZOMATO_CRED = os.getenv("ZOMATO_CRED")
+UBER_CRED = os.getenv("UBER_CRED")
+UBER_ACCESS_TOKEN = os.getenv("UBER_ACCESS_TOKEN")
 
 def getGeoloc(params):
     params = "address="+params
@@ -48,7 +51,7 @@ def getVeganRestaurants(id):
     url="https://developers.zomato.com/api/v2.1/search?entity_id="+str(id)+"&entity_type=city&count=10&radius=3000&cuisines=308&sort=rating&order=desc"
     response = requests.get(url,headers=headers)
     data=response.json()
-    print(data)
+    #print(data)
     zomato_list=[]
     for restaurant in data["restaurants"]:
         zomato_dict = {
@@ -107,14 +110,6 @@ def getAddress(center):
     data=data["results"][0]["formatted_address"]
     return data
 
-def addDistance(latitude,longitude,center):
-    return geodesic(tuple(center), (latitude,longitude)).miles
-
-def orderdf(df,center):
-    df["distance"] = df.apply(lambda x: addDistance(x["lat"], x["lon"],center), axis = 1)
-    df = df.sort_values(by=['distance'])
-    return df
-
 
 def getMap(search,df,center):
     marcadores=[]
@@ -138,7 +133,7 @@ def getCenterMap(center):
     src="https://www.google.com/maps/embed/v1/view?key="+GOOGLE_CRED+"&center="+str(center[0])+","+str(center[1])+"&zoom=18&maptype=satellite"
     return src
 
-def getDir(center,coord):
+def getDirWalk(center,coord):
     orig=getAddress(center)
     orig=orig.replace(" ","+")
     dest=getAddress(coord)
@@ -146,4 +141,27 @@ def getDir(center,coord):
     src="https://www.google.com/maps/embed/v1/directions?key="+GOOGLE_CRED+"&origin="+orig+"&destination="+dest+"&mode=walking"
     return src
 
-    
+def getDirCar(center,coord):
+    orig=getAddress(center)
+    orig=orig.replace(" ","+")
+    dest=getAddress(coord)
+    dest=dest.replace(" ","+")
+    src="https://www.google.com/maps/embed/v1/directions?key="+GOOGLE_CRED+"&origin="+orig+"&destination="+dest+"&mode=driving"
+    return src
+
+def uberSession():
+    session = Session(server_token=UBER_CRED)
+    client = UberRidesClient(session)
+    print(client)
+    return client
+
+def getPrices():
+    headers = {    
+       "Authorization": "Bearer {}".format(UBER_ACCESS_TOKEN)
+    }
+    url = 'https://api.uber.com/v1.2/estimates/price?start_latitude=37.7752315&start_longitude=-122.418075&end_latitude=37.7752415&end_longitude=-122.518075'
+    response = requests.get(url,headers=headers)
+    print(response.status_code)
+    data=response.json()
+    return data
+
