@@ -1,42 +1,72 @@
-from bottle import route, run, post, request, static_file,template
+import bottle
+from bottle import route, run, post, request, static_file,template,response
 import api
 import data
 import numpy as np
 import pandas as pd
 
+
 #lat = 37.7749295
 #lon = -122.4194155
 #radio = 2500
+class EnableCors(object):
+    name = 'enable_cors'
+    api = 2
 
-@route('/')
+    def apply(self, fn, context):
+        def _enable_cors(*args, **kwargs):
+            # set CORS headers
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, OPTIONS'
+            response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
+
+            if bottle.request.method != 'OPTIONS':
+                # actual request; reply with the actual response
+                return fn(*args, **kwargs)
+
+        return _enable_cors
+
+
+app = bottle.app()
+
+@app.route('/cors', method=['OPTIONS', 'GET'])
+def lvambience():
+    response.headers['Content-type'] = 'application/json'
+    return '[1]'
+
+app.install(EnableCors())
+
+@app.route('/')
 def server_static(filepath="home.html"):
+    response.set_header('Access-Control-Allow-Origin', '*')
+    response.add_header('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS')
     return static_file(filepath, root='')
 
-@route('/static/index.css')
+@app.route('/static/index.css')
 def send_css(filepath="/static/index.css"):
     return static_file(filepath, root='')
 
-@route('/static/util.css')
+@app.route('/static/util.css')
 def send_css2(filepath="/static/util.css"):
     return static_file(filepath, root='')
 
-@route('/static/main.css')
+@app.route('/static/main.css')
 def send_css3(filepath="/static/main.css"):
     return static_file(filepath, root='')
 
-@route('/static/jquery-3.3.1.min.js')
+@app.route('/static/jquery-3.3.1.min.js')
 def send_scr(filepath="/static/jquery-3.3.1.min.js"):
     return static_file(filepath, root='')
 
-@route('/static/scrollify.js')
+@app.route('/static/scrollify.js')
 def send_scr2(filepath="/static/scrollify.js"):
     return static_file(filepath, root='')
 
-@route('/static/jquery.scrollify.js')
+@app.route('/static/jquery.scrollify.js')
 def send_scr3(filepath="/static/jquery.scrollify.js"):
     return static_file(filepath, root='')
 
-@post('/doform')
+@app.post('/doform')
 def process():
     search = request.forms.get('searchbox')
     geo = api.getGeoloc(search)
@@ -70,4 +100,5 @@ def process():
     schools = api.getSchools(search,lat,lon)
     return template('results.html','',lat=lat,lon=lon,airport_img=airport_img,center_img=center_img,rest_near=rest_near,star_near=star_near,addresscenter=addresscenter,companies_img=companies_img,rest_img=rest_img,center=center,starbucks_img=starbucks_img,schools=schools,search=search,tables=[compan_order.to_html(classes='data',columns=("name","description","category_code","homepage_url","distance"), header="true")],airports=[airport_order.to_html(classes='data',columns=("Airport","City","Country","distance"),header="True")])
 
-run(host='localhost', reloader=True, port=8080, debug=True)
+#run(host='localhost', reloader=True, port=8080, debug=True)
+app.run(port=8080)

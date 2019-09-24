@@ -6,6 +6,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home page</title>
     <link rel="stylesheet" type="text/css" href="/static/index.css"> 
+    
+    <script>
+      
+      var getJSON = function(url, callback) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.responseType = 'json';
+        xhr.onload = function() {
+          var status = xhr.status;
+          if (status === 200) {
+            callback(null, xhr.response);
+          } else {
+            callback(status, xhr.response);
+          }
+        };
+        xhr.send();
+      };
+      
+      function geolocate(value){
+        console.log(value)
+        var text = "";
+        url = "https://maps.googleapis.com/maps/api/place/autocomplete/json?input="+value+"&types=(cities)&key=key"
+        getJSON(url,
+        function(err, data) {
+          if (err !== null) {
+          alert('Something went wrong: ' + err);
+        } else {
+          /*console.log(data.predictions);*/
+          for (i = 0; i < 5; i++) {
+            /*console.log(data.predictions[i].description)*/
+            b = document.createElement("DIV");
+            b.innerHTML += "<input type='text' value='" + data.predictions[i].description + "' readonly><br>";
+            text += data.predictions[i].description + "<br>";
+                      
+            }
+            
+            document.getElementById("hola").innerHTML = text;
+            
+        }
+        });     
+      }
+    </script>
 </head>
 
 <body>
@@ -14,9 +56,10 @@
 
     <div class="container">
     <div class="container__item">
-		<form class="form" method="post" action="doform">
-			<input type="text" class="form__field" name="searchbox" placeholder="Insert a city" />
-			<input type="submit" value="Search" class="btn btn--primary btn--inside uppercase">
+		<form class="form" id="test" method="post" action="doform">
+			<input type="text" class="form__field" id="autocomplete" autocomplete="off" name="searchbox" onkeydown="geolocate(this.value);" placeholder="Insert a city" />
+      <input type="submit" value="Search" class="btn btn--primary btn--inside uppercase">
+      <p id="hola"></p>
 		</form>
     </div>
     </div>

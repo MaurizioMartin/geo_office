@@ -149,6 +149,12 @@ def getDirCar(center,coord):
     src="https://www.google.com/maps/embed/v1/directions?key="+GOOGLE_CRED+"&origin="+orig+"&destination="+dest+"&mode=driving"
     return src
 
+def autocomplete():
+    url = "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=Vict&types=geocode&key={}".format(GOOGLE_CRED)
+    response = requests.get(url)
+    data=response.json()
+    return data
+
 def uberSession():
     session = Session(server_token=UBER_CRED)
     client = UberRidesClient(session)
